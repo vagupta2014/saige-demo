@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAIGE Risk Intelligence — Underwriting Prototype</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --teal:#00B2A9;--teal-lt:#e6f7f7;--teal-dk:#008880;
+  --navy:#0f172a;--slate:#475569;--grey:#94a3b8;--border:#e2e8f0;
+  --bg:#f8fafc;--white:#fff;
+  --green:#16a34a;--green-lt:#f0fdf4;--green-bd:#bbf7d0;
+  --amber:#d97706;--amber-lt:#fffbeb;--amber-bd:#fcd34d;
+  --red:#dc2626;--red-lt:#fef2f2;--red-bd:#fecaca;
+  --gold:#ca8a04;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:12px;background:#e8eef4;color:var(--navy);}
+.screen{display:none;}
+.screen.active{display:block;}
+
+/* ── COVER ──────────────────────────────────────────────── */
+.cover{min-height:100vh;display:flex;flex-direction:column;background:var(--white);}
+.cover-nav{background:var(--navy);height:48px;display:flex;align-items:center;padding:0 36px;justify-content:space-between;}
+.cover-nav .logo{color:#fff;font-size:15px;font-weight:800;letter-spacing:-.3px;}
+.cover-nav .logo em{color:var(--teal);font-style:normal;}
+.cover-nav .proto-badge{background:rgba(255,255,255,.1);color:#cbd5e1;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;}
+.cover-body{flex:1;padding:32px 48px;max-width:1200px;width:100%;margin:0 auto;}
+.cover-title{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:3px;}
+.cover-sub{font-size:13px;color:var(--slate);margin-bottom:28px;}
+.cover-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:24px;}
+.cover-card{border:1.5px solid var(--border);border-radius:8px;padding:18px;}
+.cover-card.active-card{border-color:var(--teal);background:var(--teal-lt);}
+.cc-label{font-size:9px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;}
+.cc-label.act{color:var(--teal-dk);}
+.cc-label.dim{color:var(--grey);}
+.cc-name{font-size:15px;font-weight:800;margin-bottom:3px;}
+.cc-role{font-size:11px;color:var(--slate);margin-bottom:10px;line-height:1.4;}
+.cc-row{display:flex;gap:7px;align-items:flex-start;margin-bottom:5px;}
+.cc-dot{width:6px;height:6px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+.cc-dot.red{background:var(--red);}
+.cc-dot.grey{background:var(--grey);}
+.cc-dot.teal{background:var(--teal);}
+.cc-text{font-size:11px;color:var(--slate);line-height:1.4;}
+.cc-problem{background:var(--red-lt);border:1px solid var(--red-bd);border-radius:5px;padding:8px 10px;margin-top:10px;}
+.cc-problem .problem-lbl{font-size:8.5px;font-weight:800;color:var(--red);letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px;}
+.cc-problem .problem-val{font-size:11px;color:#7f1d1d;font-weight:600;}
+.cc-solved{background:var(--teal-lt);border:1px solid #99f6e4;border-radius:5px;padding:8px 10px;margin-top:7px;}
+.cc-solved .solved-lbl{font-size:8.5px;font-weight:800;color:var(--teal-dk);letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px;}
+.cc-solved .solved-val{font-size:11px;color:#134e4a;font-weight:600;}
+.cover-policy{border:1.5px solid var(--border);border-radius:8px;padding:14px 18px;margin-bottom:18px;background:#fafbfc;}
+.cover-policy-lbl{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--grey);margin-bottom:5px;}
+.cover-hypothesis{border-left:3px solid var(--teal);padding:12px 16px;background:var(--teal-lt);border-radius:0 8px 8px 0;margin-bottom:22px;}
+.cover-hypothesis-lbl{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--teal-dk);margin-bottom:4px;}
+.cover-hypothesis p{font-size:12px;color:#134e4a;line-height:1.6;}
+.btn-enter{background:var(--teal);color:#fff;border:none;padding:11px 26px;border-radius:6px;font-size:13px;font-weight:700;cursor:pointer;}
+.btn-enter:hover{background:var(--teal-dk);}
+
+/* ── WORKSPACE ───────────────────────────────────────────── */
+.workspace{display:flex;height:100vh;overflow:hidden;background:#dde3eb;}
+
+/* ── LEFT PANEL ──────────────────────────────────────────── */
+.left-panel{width:285px;flex-shrink:0;overflow-y:auto;background:#f5f4f1;border-right:1px solid #dde1e8;padding:13px;}
+.lp-label{font-size:8px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#b0b8c6;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #e5e7eb;}
+.rc{border:1.5px dashed #c8cdd5;border-radius:5px;padding:8px 10px;margin-bottom:8px;font-size:10.5px;color:#6b7280;line-height:1.55;background:transparent;}
+.rc-label{font-size:8px;font-weight:800;color:#9ca3af;letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+.sc{padding:5px 0 5px 9px;margin:6px 0;font-size:10.5px;line-height:1.5;}
+.sc.before{border-left:2px solid #94a3b8;color:#64748b;}
+.sc.after{border-left:2px solid var(--teal);color:#0f766e;}
+.sc-label{font-size:8px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px;}
+.sc.before .sc-label{color:#94a3b8;}
+.sc.after .sc-label{color:var(--teal-dk);}
+.ei{border-left:2px solid var(--gold);padding:5px 0 5px 9px;margin:8px 0;font-size:10.5px;color:#78350f;line-height:1.55;background:transparent;}
+.ei-label{font-size:8px;font-weight:800;color:var(--gold);letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px;}
+.lp-div{height:1px;background:#e5e7eb;margin:9px 0;}
+.lp-note{font-size:10px;color:#6b7280;line-height:1.5;margin-top:5px;}
+
+/* ── RIGHT PANEL ─────────────────────────────────────────── */
+.right-panel{flex:1;padding:9px 13px 9px 9px;display:flex;flex-direction:column;min-width:0;}
+.rp-label{font-size:8px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#8fa3b8;margin-bottom:5px;text-align:right;}
+.product-frame{flex:1;display:flex;flex-direction:column;border:1.5px solid #c0cad8;border-radius:8px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.09),0 1px 4px rgba(0,0,0,.05);background:var(--bg);position:relative;}
+
+/* ── PF NAV ──────────────────────────────────────────────── */
+.pf-nav{background:var(--navy);height:40px;padding:0 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.pf-logo{color:#fff;font-size:13px;font-weight:800;letter-spacing:-.2px;}
+.pf-logo em{color:var(--teal);font-style:normal;}
+.pf-nav-right{display:flex;align-items:center;gap:11px;}
+.pf-pill{background:rgba(255,255,255,.09);color:#94a3b8;font-size:10px;padding:2px 8px;border-radius:20px;}
+.pf-date{color:#4b5563;font-size:10px;}
+
+/* ── PF PROGRESS ─────────────────────────────────────────── */
+.pf-progress{background:#1e293b;height:34px;padding:0 16px;display:flex;align-items:center;border-bottom:1px solid #2d3d52;flex-shrink:0;}
+.pt-step{display:flex;align-items:center;gap:5px;cursor:pointer;}
+.pt-step:hover .pt-label{color:#cbd5e1;}
+.pt-dot{width:18px;height:18px;border-radius:50%;border:2px solid #475569;background:#1e293b;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#64748b;flex-shrink:0;transition:all .2s;}
+.pt-dot.done{background:var(--teal-dk);border-color:var(--teal-dk);color:#fff;}
+.pt-dot.active{background:var(--teal);border-color:var(--teal);color:#fff;box-shadow:0 0 0 2px rgba(0,178,169,.3);}
+.pt-label{font-size:9.5px;color:#6b7280;white-space:nowrap;}
+.pt-label.done{color:var(--teal-dk);}
+.pt-label.active{color:#fff;font-weight:700;}
+.pt-connector{width:16px;height:2px;background:#475569;margin:0 3px;flex-shrink:0;}
+.pt-connector.done{background:var(--teal-dk);}
+
+/* ── PF CONTENT ──────────────────────────────────────────── */
+.pf-content{flex:1;overflow-y:auto;padding:12px 16px;background:var(--bg);}
+.pf-back{display:inline-flex;align-items:center;gap:4px;color:var(--teal);font-size:11px;font-weight:600;cursor:pointer;border:none;background:none;padding:0;margin-bottom:10px;}
+.ph1{font-size:16px;font-weight:800;color:var(--navy);}
+.ph-sub{font-size:10.5px;color:var(--slate);margin-top:2px;margin-bottom:10px;}
+.sec{font-size:9px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.div{height:1px;background:var(--border);margin:8px 0;}
+
+/* ── CARDS / GRIDS ───────────────────────────────────────── */
+.card{background:var(--white);border-radius:7px;border:1px solid var(--border);padding:11px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;}
+.rehash-split{display:grid;grid-template-columns:5fr 4fr;gap:12px;align-items:start;}
+
+/* ── METRICS ─────────────────────────────────────────────── */
+.metric .lbl{font-size:9px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.7px;margin-bottom:3px;}
+.metric .val{font-size:17px;font-weight:800;color:var(--navy);line-height:1;}
+.metric .sub{font-size:10px;color:var(--slate);margin-top:2px;}
+
+/* ── BARS ────────────────────────────────────────────────── */
+.bar-row{margin-bottom:8px;}
+.bar-header{display:flex;justify-content:space-between;font-size:10.5px;margin-bottom:4px;}
+.bar-lbl{color:var(--slate);}
+.bar-val{color:var(--navy);font-weight:700;}
+.bar-track{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;}
+.app-wrap{height:4px;background:var(--border);border-radius:3px;margin:4px 0;}
+.app-fill{height:100%;border-radius:3px;}
+.app-fill.safe{background:var(--green);}
+.app-fill.warn{background:var(--amber);}
+
+/* ── BADGES ──────────────────────────────────────────────── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;}
+.badge.pending{background:#fed7aa;color:#9a3412;}
+.tag-rec{display:inline-block;font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;background:var(--teal);color:#fff;text-transform:uppercase;margin-left:5px;vertical-align:middle;}
+
+/* ── PORTFOLIO SELECTOR TABS ────────────────────────────── */
+.port-tab{flex:1;border-radius:6px;padding:7px 10px;border:1px solid var(--border);background:var(--bg);}
+.port-tab.active-tab{background:var(--teal-lt);border:1.5px solid var(--teal);}
+.port-tab-label{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;}
+.port-tab.active-tab .port-tab-label{color:var(--teal-dk);}
+.port-tab:not(.active-tab) .port-tab-label{color:var(--grey);}
+.port-tab-name{font-size:12px;font-weight:800;color:var(--navy);}
+.port-tab-sub{font-size:9.5px;color:var(--slate);}
+.port-tab.active-tab .port-tab-sub{color:var(--teal-dk);}
+
+/* ── RISK BARS ───────────────────────────────────────────── */
+.risk-row{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.risk-lbl{font-size:11px;color:var(--slate);width:108px;flex-shrink:0;}
+.risk-track{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.risk-fill{height:100%;border-radius:3px;}
+.risk-fill.h{background:var(--red);}
+.risk-fill.m{background:var(--amber);}
+.risk-num{font-size:11px;font-weight:800;width:30px;text-align:right;}
+
+/* ── TABLE ───────────────────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;font-size:10.5px;}
+.tbl th{text-align:left;font-size:9px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.7px;padding:5px 7px;border-bottom:2px solid var(--border);}
+.tbl td{padding:7px;border-bottom:1px solid var(--border);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr.hl td{background:var(--teal-lt);}
+.better{color:var(--green);font-weight:700;}
+.worse{color:var(--red);}
+.na-val{color:var(--grey);font-style:italic;}
+
+/* ── PROP ROW ────────────────────────────────────────────── */
+.prop-row{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:10.5px;}
+.prop-row:last-child{border-bottom:none;}
+.pr-l{color:var(--slate);}
+.pr-v{font-weight:600;color:var(--navy);}
+
+/* ── PENDING ROWS ────────────────────────────────────────── */
+.pend-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:9px;}
+.pend-row:last-child{border-bottom:none;}
+.pr-score{text-align:center;min-width:33px;}
+.pr-scn{font-size:15px;font-weight:800;color:var(--navy);line-height:1;}
+.pr-scl{font-size:8px;color:var(--grey);text-transform:uppercase;}
+.pr-info{flex:1;}
+.pr-addr{font-weight:600;font-size:11px;color:var(--navy);}
+.pr-meta{font-size:9.5px;color:var(--slate);margin-top:1px;}
+.pr-wind{font-size:9px;font-weight:600;padding:2px 6px;border-radius:3px;white-space:nowrap;}
+.pr-wind.high{background:var(--red-lt);color:var(--red);}
+.pr-wind.med{background:var(--amber-lt);color:var(--amber);}
+.btn-review{background:var(--teal);color:#fff;border:none;padding:5px 11px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;}
+.btn-dis{background:var(--border);color:var(--grey);border:none;padding:5px 11px;border-radius:5px;font-size:11px;cursor:not-allowed;}
+
+/* ── LEVERS ──────────────────────────────────────────────── */
+.lever{margin-bottom:12px;}
+.lever-lbl{font-size:11px;font-weight:700;color:var(--navy);margin-bottom:2px;display:flex;align-items:center;gap:4px;}
+.lever-hint{font-size:9.5px;color:var(--grey);margin-bottom:5px;}
+.fix-note{font-size:9px;color:var(--amber);font-weight:600;margin-left:3px;display:none;}
+.lever.fixable{background:var(--amber-lt);border-radius:5px;padding:7px;margin:-7px -7px 5px;border:1px solid var(--amber-bd);}
+.lever.fixable .fix-note{display:inline;}
+.radio-row{display:flex;gap:4px;flex-wrap:wrap;}
+.r-opt input[type=radio]{display:none;}
+.r-opt label{display:block;padding:4px 9px;border:1px solid var(--border);border-radius:4px;cursor:pointer;font-size:11px;color:var(--slate);transition:all .15s;}
+.r-opt input:checked+label{background:var(--teal);color:#fff;border-color:var(--teal);font-weight:700;}
+input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
+.tgl-row{display:flex;align-items:center;gap:8px;}
+.tgl{position:relative;width:32px;height:17px;flex-shrink:0;}
+.tgl input{display:none;}
+.tgl-track{position:absolute;inset:0;background:var(--border);border-radius:9px;cursor:pointer;transition:.2s;}
+.tgl-track::after{content:'';position:absolute;width:11px;height:11px;background:#fff;border-radius:50%;top:3px;left:3px;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2);}
+.tgl input:checked+.tgl-track{background:var(--teal);}
+.tgl input:checked+.tgl-track::after{left:18px;}
+.tgl-lbl{font-size:11px;color:var(--slate);}
+
+/* ── RESULTS ─────────────────────────────────────────────── */
+.res-rec{border-radius:7px;padding:10px;text-align:center;margin-bottom:10px;border:2px solid;transition:all .25s;}
+.res-rec .rec-lbl{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;opacity:.65;margin-bottom:3px;}
+.res-rec .rec-val{font-size:14px;font-weight:800;}
+.res-rec.bind{background:var(--green-lt);border-color:var(--green-bd);}
+.res-rec.bind .rec-val{color:var(--green);}
+.res-rec.conditions{background:var(--amber-lt);border-color:var(--amber-bd);}
+.res-rec.conditions .rec-val{color:var(--amber);}
+.res-rec.decline{background:var(--red-lt);border-color:var(--red-bd);}
+.res-rec.decline .rec-val{color:var(--red);}
+.res-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);}
+.res-row:last-child{border-bottom:none;}
+.res-lbl{font-size:10px;color:var(--slate);}
+.res-val{font-size:11px;font-weight:700;color:var(--navy);}
+.res-val.pos{color:var(--green);}
+.res-val.neg{color:var(--red);}
+.model-strip{display:flex;gap:4px;margin-top:6px;}
+.ms-item{flex:1;background:var(--bg);border-radius:5px;border:1px solid var(--border);padding:5px 4px;text-align:center;}
+.ms-item.active-m{background:var(--teal-lt);border-color:var(--teal);}
+.ms-name{font-size:8px;color:var(--grey);font-weight:700;text-transform:uppercase;margin-bottom:2px;}
+.ms-val{font-size:11px;font-weight:800;color:var(--navy);}
+
+/* ── CALLOUTS ────────────────────────────────────────────── */
+.callout{border-radius:5px;padding:8px 10px;font-size:10.5px;margin:7px 0;line-height:1.5;}
+.callout.info{background:var(--teal-lt);border-left:3px solid var(--teal);color:#0f766e;}
+.callout.warn{background:var(--amber-lt);border-left:3px solid var(--amber);color:#92400e;}
+.callout.danger{background:var(--red-lt);border-left:3px solid var(--red);color:#991b1b;}
+.callout.success{background:var(--green-lt);border-left:3px solid var(--green);color:#065f46;}
+
+/* ── GOVERNANCE ──────────────────────────────────────────── */
+.rec-block{margin-bottom:12px;}
+.rec-block-title{font-size:9px;font-weight:700;color:var(--grey);text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px;padding-bottom:4px;border-bottom:2px solid var(--border);}
+.rec-line{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f1f5f9;font-size:10.5px;}
+.rec-line:last-child{border-bottom:none;}
+.rl{color:var(--slate);}
+.rv{font-weight:600;color:var(--navy);}
+.rv.good{color:var(--green);}
+.rv.warn-c{color:var(--amber);}
+.mprov{background:#1e293b;border-radius:6px;padding:11px;color:#e2e8f0;font-size:9.5px;font-family:'SF Mono','Courier New',monospace;}
+.mp-label{color:#64748b;font-size:8px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:6px;}
+.mp-row{display:flex;justify-content:space-between;margin-bottom:3px;}
+.mp-key{color:#94a3b8;}
+.mp-val{color:var(--teal);font-weight:700;}
+.btn{padding:7px 14px;border-radius:5px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-block;}
+.btn-primary{background:var(--teal);color:#fff;}
+.btn-primary:hover{background:var(--teal-dk);}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--border);}
+.btn-secondary:hover{border-color:var(--teal);color:var(--teal);}
+
+/* ── SCROLL INDICATOR ────────────────────────────────────── */
+.scroll-hint{position:absolute;bottom:10px;right:10px;width:24px;height:24px;border-radius:50%;background:rgba(15,23,42,.45);color:rgba(255,255,255,.9);display:flex;align-items:center;justify-content:center;font-size:12px;pointer-events:none;z-index:20;animation:bounce-hint 2.2s ease-in-out infinite;}
+@keyframes bounce-hint{0%,100%{transform:translateY(0);opacity:.55;}50%{transform:translateY(3px);opacity:1;}}
+
+/* ── PLAY HINT ───────────────────────────────────────────── */
+.play-hint{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--teal);margin-left:6px;vertical-align:middle;animation:pulse-hint 2s ease-in-out infinite;}
+@keyframes pulse-hint{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.3;transform:scale(.65);}}
+
+/* ── ANALYST ACTION ──────────────────────────────────────── */
+.aa{background:#fff;border:1.5px solid #c8cdd5;border-radius:5px;padding:8px 10px;margin-bottom:8px;font-size:10.5px;color:var(--navy);line-height:1.6;}
+.aa-label{font-size:8px;font-weight:800;color:var(--teal-dk);letter-spacing:.8px;text-transform:uppercase;margin-bottom:4px;}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 0: COVER                                           -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="s0" class="screen active">
+<div class="cover">
+  <div class="cover-nav">
+    <span class="logo"><em>SAIGE</em> Risk Intelligence</span>
+    <span class="proto-badge">Prototype · Illustrative data only</span>
+  </div>
+  <div class="cover-body">
+    <div class="cover-title">Specialty Property Underwriting — Product Concept</div>
+    <div class="cover-sub">A product layer for LQM-powered catastrophe risk assessment at the individual policy level. Built to test a specific hypothesis about where the bottleneck actually lives.</div>
+
+    <div class="cover-grid">
+
+      <div class="cover-card" style="opacity:.8;">
+        <div class="cc-label dim">Persona 1 · Actuarial Team</div>
+        <div class="cc-name">Catastrophe Analyst</div>
+        <div class="cc-role">Owns portfolio-level cat model runs. Sets pricing guidelines and appetite limits that underwriters work from.</div>
+        <div class="cc-row"><div class="cc-dot grey"></div><div class="cc-text">Runs RMS / Verisk AIR on full portfolio — hours to days per run</div></div>
+        <div class="cc-row"><div class="cc-dot grey"></div><div class="cc-text">Produces quarterly EP curves, AAL, PML for board and reinsurance</div></div>
+        <div class="cc-row"><div class="cc-dot grey"></div><div class="cc-text">Handles per-submission model run requests from underwriting</div></div>
+        <div class="cc-problem">
+          <div class="problem-lbl">Problem 1 — Compute speed</div>
+          <div class="problem-val">Portfolio runs quarterly. Per-submission model run: 2–5 business day turnaround on request.</div>
+        </div>
+        <div class="cc-solved">
+          <div class="solved-lbl">SAIGE LQM solves this ↗</div>
+          <div class="solved-val">Milliseconds per run. Same computation, no batch cycle required.</div>
+        </div>
+      </div>
+
+      <div class="cover-card active-card">
+        <div class="cc-label act">Persona 2 · Underwriting Team ★ This prototype's user</div>
+        <div class="cc-name">Alison Chen</div>
+        <div class="cc-role">Property Underwriting Analyst · Makes bind / decline / condition decisions on individual high-value submissions. Authority limit ≤$5M replacement value.</div>
+        <div class="cc-row"><div class="cc-dot teal"></div><div class="cc-text">Evaluates high-value properties ($1M–$10M replacement cost)</div></div>
+        <div class="cc-row"><div class="cc-dot teal"></div><div class="cc-text">Works from actuarial guidelines and pre-run cat outputs — not live models</div></div>
+        <div class="cc-row"><div class="cc-dot teal"></div><div class="cc-text">At bind time: no live portfolio accumulation context — works from quarterly snapshot</div></div>
+        <div class="cc-problem">
+          <div class="problem-lbl">Problem 2 — Workflow gap</div>
+          <div class="problem-val">Analyst works from stale quarterly data. Per-submission model run requires 2–5 day actuarial request. No live view at bind time.</div>
+        </div>
+        <div class="cc-solved">
+          <div class="solved-lbl">This prototype tests whether ↗</div>
+          <div class="solved-val">A purpose-designed product layer closes this gap — real-time LQM output directly at the analyst's decision point, with live portfolio context and a governance artifact.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="cover-policy">
+      <div class="cover-policy-lbl">What "policy" means in this prototype</div>
+      <div style="font-size:12px;color:var(--navy);line-height:1.6;">
+        A single insurance contract on a <strong>specialty high-value residential property</strong> in a catastrophe-exposed zone — the type written by Chubb, AIG Private Client, Travelers High Value, or Lloyd's syndicates. Replacement value $1M–$10M. Individual cat model assessment required before bind.
+        <span style="color:var(--red);font-weight:600;"> Not</span> standard mass-market (State Farm, Progressive) where policies are batch-priced from rate tables without per-property cat model runs.
+      </div>
+    </div>
+
+    <div class="cover-hypothesis">
+      <div class="cover-hypothesis-lbl">Hypothesis being tested</div>
+      <p>If you put LQM output directly in the underwriting analyst's hands — with live portfolio context, interactive term controls, and a governance artifact — she can make a defensible bind decision in under 5 minutes without routing through the cat modeling team. Portfolio accumulation updates at bind time, not quarterly. Pattern: Upstart Auto (UAF) went from 5% → 9.7% bind conversion by giving Finance Managers levers, not black boxes. Same ML. Better interface.</p>
+    </div>
+
+    <button class="btn-enter" onclick="goTo('s1')">Enter Prototype →</button>
+  </div>
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 1: SELECT POLICY                                   -->
+<!-- Portfolio selector + Gulf Coast health + pending queue    -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="s1" class="screen">
+<div class="workspace">
+  <div class="left-panel">
+    <div class="lp-label">Annotations</div>
+    <div class="aa">
+      <div class="aa-label">🎬 Screen 1 — What's happening</div>
+      Alison opens AQ-Insur to check her Gulf Coast portfolio. Risk budget is at 78% — two points from ceiling. She sees 3 policies auto-assessed overnight and clicks <strong>Review →</strong> on Pelican Bay, the highest-risk submission.
+    </div>
+    <div class="lp-div"></div>
+    <div class="sc before">
+      <div class="sc-label">Legacy workflow</div>
+      Policies arrived via email. Each required a 2–5 day actuarial model run before review could begin.
+    </div>
+    <div class="sc after">
+      <div class="sc-label">With SAIGE · time saved</div>
+      Saves 2–5 days per policy. Model ran at submission — analyst starts immediately on arrival.
+    </div>
+    <div class="lp-div"></div>
+    <div class="ei">
+      <div class="ei-label">⚡ Product Principle · from Upstart Auto</div>
+      At Upstart Auto, the Credit First feature came from 8 weeks shadowing Finance Managers in dealerships — not interviews, but live workflow observation. We didn't design until we could name exactly where the old process failed. That map became the product brief. Applied here: every SAIGE screen targets a specific gap in the legacy cat model workflow — the 2–5 day actuarial request, the quarterly portfolio PDF, the manual audit trail. These gaps are observed from secondary research and industry signals; the hypothesis is to be validated with direct underwriter research. Designing from observed workflow failure — not assumed need — is what produces adoption rather than features.
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="rp-label">Prototype Screen →</div>
+    <div class="product-frame">
+      <div class="scroll-hint">↓</div>
+      <div class="pf-nav">
+        <span class="pf-logo"><em>SAIGE</em> Risk Intelligence</span>
+        <div class="pf-nav-right"><span class="pf-pill">Underwriting Analyst</span><span class="pf-date">Jun 15, 2026 · Gulf Coast</span></div>
+      </div>
+      <div class="pf-progress">
+        <div class="pt-step" onclick="goTo('s1')"><div class="pt-dot active">1</div><span class="pt-label active">Select Policy</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s2')"><div class="pt-dot">2</div><span class="pt-label">Validate Risk</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s3')"><div class="pt-dot">3</div><span class="pt-label">Assess Terms</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s4')"><div class="pt-dot">4</div><span class="pt-label">Confirm & Bind</span></div>
+      </div>
+      <div class="pf-content">
+        <div class="ph1">Gulf Coast Residential</div>
+        <div class="ph-sub">Portfolio risk summary · <span style="color:var(--teal);font-weight:600;">Auto-refreshed daily</span> · Last updated 08:14 today · 3 policies pending</div>
+
+        <!-- Portfolio selector tabs -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <div class="port-tab active-tab">
+            <div class="port-tab-label">● Active</div>
+            <div class="port-tab-name">Gulf Coast</div>
+            <div class="port-tab-sub">$12.5B TIV · 3 pending</div>
+          </div>
+          <div class="port-tab" style="opacity:.6;">
+            <div class="port-tab-label">Portfolio</div>
+            <div class="port-tab-name">Southeast FL</div>
+            <div class="port-tab-sub">$4.8B TIV · 1 pending</div>
+          </div>
+          <div class="port-tab" style="opacity:.6;">
+            <div class="port-tab-label">Portfolio</div>
+            <div class="port-tab-name">Texas Coast</div>
+            <div class="port-tab-sub">$3.2B TIV · 0 pending</div>
+          </div>
+        </div>
+
+        <!-- Health metrics -->
+        <div class="g4" style="margin-bottom:10px;">
+          <div class="card"><div class="metric"><div class="lbl">Total Insured Value</div><div class="val">$12.5B</div><div class="sub">50,000 locations</div></div></div>
+          <div class="card"><div class="metric"><div class="lbl">Avg Annual Loss</div><div class="val">$152M</div><div class="sub">1.2% of TIV</div></div></div>
+          <div class="card"><div class="metric"><div class="lbl">1-in-100 Worst Year</div><div class="val">$1.08B</div><div class="sub">8.6% of TIV</div></div></div>
+          <div class="card" style="border-top:3px solid var(--amber);">
+            <div class="metric"><div class="lbl">Risk Budget Used</div><div class="val" style="color:var(--amber);">78%</div><div class="sub">Ceiling 80% · 3 pending</div></div>
+            <div class="app-wrap" style="margin-top:5px;"><div class="app-fill warn" style="width:78%;"></div></div>
+          </div>
+        </div>
+
+        <!-- Risk charts -->
+        <div class="g2" style="margin-bottom:10px;">
+          <div class="card">
+            <div class="sec">Risk by Peril</div>
+            <div class="bar-row"><div class="bar-header"><span class="bar-lbl">Hurricane (wind + surge)</span><span class="bar-val">$108M · 71%</span></div><div class="bar-track"><div class="bar-fill" style="width:71%;background:var(--teal);"></div></div></div>
+            <div class="bar-row" style="margin-bottom:0;"><div class="bar-header"><span class="bar-lbl">Flood (riverine + pluvial)</span><span class="bar-val">$44M · 29%</span></div><div class="bar-track"><div class="bar-fill" style="width:29%;background:#93c5fd;"></div></div></div>
+          </div>
+          <div class="card">
+            <div class="sec">1-in-100 Worst Year — Three Climate Views</div>
+            <div class="bar-row"><div class="bar-header"><span class="bar-lbl">Historical average</span><span class="bar-val">$1.08B</span></div><div class="bar-track"><div class="bar-fill" style="width:52%;background:#94a3b8;"></div></div></div>
+            <div class="bar-row"><div class="bar-header"><span class="bar-lbl">Near-term elevated</span><span class="bar-val">$1.24B</span></div><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--amber);"></div></div></div>
+            <div class="bar-row" style="margin-bottom:0;"><div class="bar-header"><span class="bar-lbl">Climate-adjusted 2050</span><span class="bar-val" style="color:var(--red);">$1.61B (+49%)</span></div><div class="bar-track"><div class="bar-fill" style="width:78%;background:var(--red);"></div></div></div>
+            <div style="font-size:9px;color:var(--grey);margin-top:6px;line-height:1.4;">1-in-100 yr OEP PML. Simulated · 50K stochastic events, NOAA HURDAT2-calibrated (1851–2023). Climate 2050 per IPCC AR6 SSP5-8.5. Consistent with AIR/Verisk Gulf Coast benchmarks.</div>
+          </div>
+        </div>
+
+        <!-- Pending policy queue -->
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="sec" style="margin-bottom:0;">Policies Pending Review <span class="badge pending" style="margin-left:5px;">3</span></div>
+            <span style="font-size:9.5px;color:var(--grey);">Assessed at submission — review before binding</span>
+          </div>
+          <div class="pend-row">
+            <div class="pr-score"><div class="pr-scn">8</div><div class="pr-scl">Wind</div></div>
+            <div class="pr-info">
+              <div class="pr-addr">4721 Pelican Bay Dr, Naples FL 34103</div>
+              <div class="pr-meta">$4.2M · Wood frame · 0.3 mi from coast · Submitted Jun 15, 2026 10:23 AM (2 hrs ago)</div>
+            </div>
+            <span class="pr-wind high">High Risk</span>
+            <button class="btn-review" onclick="goTo('s2')">Review →</button>
+          </div>
+          <div class="pend-row">
+            <div class="pr-score"><div class="pr-scn">7</div><div class="pr-scl">Wind</div></div>
+            <div class="pr-info">
+              <div class="pr-addr">8803 Gulf Shore Blvd, Naples FL 34108</div>
+              <div class="pr-meta">$2.8M · Masonry · 0.6 mi from coast · Submitted Jun 15, 2026 09:11 AM (3 hrs ago)</div>
+            </div>
+            <span class="pr-wind med">Elevated</span>
+            <button class="btn-dis" disabled>Review</button>
+          </div>
+          <div class="pend-row">
+            <div class="pr-score"><div class="pr-scn">6</div><div class="pr-scl">Wind</div></div>
+            <div class="pr-info">
+              <div class="pr-addr">1205 Marco Island Cir, Marco Island FL 34145</div>
+              <div class="pr-meta">$1.9M · Masonry · 1.2 mi from coast · Submitted Jun 14, 2026 4:42 PM (yesterday)</div>
+            </div>
+            <span class="pr-wind med">Elevated</span>
+            <button class="btn-dis" disabled>Review</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 2: VALIDATE RISK                                   -->
+<!-- Property profile + model comparison                       -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="s2" class="screen">
+<div class="workspace">
+  <div class="left-panel">
+    <div class="lp-label">Annotations</div>
+    <div class="aa">
+      <div class="aa-label">🎬 Screen 2 — What's happening</div>
+      Alison reviews Pelican Bay's risk profile (wind 8/10, 0.3 mi from coast, no storm mitigation), then compares SAIGE LQM expected annual loss (AAL) and accuracy vs. RMS and Verisk on real Gulf Coast storms. Confidence band confirms calibration for this property type. She clicks <strong>Proceed to Underwriting →</strong>.
+    </div>
+    <div class="lp-div"></div>
+    <div class="sc before">
+      <div class="sc-label">Legacy workflow</div>
+      Vendor model: point estimate only, no confidence band, no in-distribution signal. Analyst couldn't gauge model certainty for this property type.
+    </div>
+    <div class="sc after">
+      <div class="sc-label">With SAIGE · accuracy gained</div>
+      8% avg error vs. 19–24% (vendors). Confidence band 2× tighter. 1,240 similar properties in training.
+    </div>
+    <div class="lp-div"></div>
+    <div class="ei">
+      <div class="ei-label">⚡ Product Principle · from Upstart Auto</div>
+      At Upstart Auto, Finance Managers asked "why should I trust this AI approval over my instinct?" The answer wasn't explaining the algorithm — it was Real-Time Alternatives: Upstart's offer next to the traditional deal, side by side in the same screen. Counterintuitively, inviting the comparison built more trust than any product claim. Applied here: if SAIGE LQM is genuinely more accurate than RMS and Verisk, a transparent back-test on real storms proves it. An underwriter who can't see that comparison will check elsewhere anyway — and likely revert to the vendor she already trusts.
+    </div>
+  </div>
+
+  <div class="right-panel">
+    <div class="rp-label">Prototype Screen →</div>
+    <div class="product-frame">
+      <div class="scroll-hint">↓</div>
+      <div class="pf-nav">
+        <span class="pf-logo"><em>SAIGE</em> Risk Intelligence</span>
+        <div class="pf-nav-right"><span class="pf-pill">Underwriting Analyst</span><span class="pf-date">Jun 15, 2026</span></div>
+      </div>
+      <div class="pf-progress">
+        <div class="pt-step" onclick="goTo('s1')"><div class="pt-dot done">✓</div><span class="pt-label done">Select Policy</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s2')"><div class="pt-dot active">2</div><span class="pt-label active">Validate Risk</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s3')"><div class="pt-dot">3</div><span class="pt-label">Assess Terms</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s4')"><div class="pt-dot">4</div><span class="pt-label">Confirm & Bind</span></div>
+      </div>
+      <div class="pf-content">
+        <button class="pf-back" onclick="goTo('s1')">← Gulf Coast Portfolio</button>
+        <div class="ph1">Policy Assessment</div>
+        <div class="ph-sub">4721 Pelican Bay Dr, Naples FL 34103 · Review risk profile and model estimates before adjusting terms</div>
+        <div class="split">
+          <div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="sec">Property Risk Profile</div>
+              <div style="font-size:13px;font-weight:800;margin-bottom:1px;">4721 Pelican Bay Dr</div>
+              <div style="font-size:10.5px;color:var(--slate);margin-bottom:10px;">Naples, FL 34103</div>
+              <div class="risk-row"><span class="risk-lbl">Wind Exposure</span><div class="risk-track"><div class="risk-fill h" style="width:80%;"></div></div><span class="risk-num" style="color:var(--red);">8/10</span></div>
+              <div class="risk-row"><span class="risk-lbl">Flood Exposure</span><div class="risk-track"><div class="risk-fill m" style="width:40%;"></div></div><span class="risk-num" style="color:var(--amber);">4/10</span></div>
+              <div class="risk-row" style="margin-bottom:0;"><span class="risk-lbl">Climate Trajectory</span><div class="risk-track"><div class="risk-fill h" style="width:70%;"></div></div><span class="risk-num" style="color:var(--red);">7/10</span></div>
+              <div class="div"></div>
+              <div class="prop-row"><span class="pr-l">Replacement value</span><span class="pr-v">$4,200,000</span></div>
+              <div class="prop-row"><span class="pr-l">Distance from coast</span><span class="pr-v">0.3 miles</span></div>
+              <div class="prop-row"><span class="pr-l">Construction</span><span class="pr-v">Wood frame · 1998</span></div>
+              <div class="prop-row"><span class="pr-l">Storm mitigation</span><span class="pr-v" style="color:var(--amber);">None documented</span></div>
+            </div>
+            <div class="callout warn" style="font-size:10px;">Binding this policy: Collier concentration <strong>33% → 35%</strong>. Risk budget <strong>78.0% → 78.2%</strong>. Both within ceiling — proceed with awareness.</div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="sec">Back-test: Accuracy on Real Storms</div>
+              <div style="font-size:10px;color:var(--slate);margin-bottom:8px;">Estimated loss on comparable Gulf Coast properties per named storm. Closer to actual = better calibrated.</div>
+              <table class="tbl">
+                <thead><tr><th>Hurricane</th><th>SAIGE LQM</th><th>RMS</th><th>Verisk</th><th>Actual loss</th></tr></thead>
+                <tbody>
+                  <tr class="hl"><td>Ian (2022)</td><td class="better">$2.8M</td><td class="worse">$3.4M</td><td class="worse">$2.2M</td><td><strong>$2.9M</strong></td></tr>
+                  <tr class="hl"><td>Irma (2017)</td><td class="better">$1.6M</td><td class="worse">$2.1M</td><td class="worse">$1.3M</td><td><strong>$1.7M</strong></td></tr>
+                  <tr class="hl"><td>Wilma (2005)</td><td class="better">$1.1M</td><td class="worse">$1.5M</td><td class="worse">$0.8M</td><td><strong>$1.2M</strong></td></tr>
+                  <tr><td><strong>Avg error</strong></td><td><strong class="better">8%</strong></td><td class="worse">24%</td><td class="worse">19%</td><td>—</td></tr>
+                </tbody>
+              </table>
+              <div style="font-size:9px;color:var(--grey);margin-top:5px;font-style:italic;">Illustrative · 3 storms. Methodology comparison, not a statistical claim.</div>
+            </div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="sec">For This Property Specifically</div>
+              <div style="font-size:10px;color:var(--slate);margin-bottom:8px;">Expected Annual Loss (AAL) estimate. Tighter confidence band = model is certain about <em>this specific risk</em>.</div>
+              <table class="tbl">
+                <thead><tr><th>Model</th><th>Exp. Annual Loss (AAL)</th><th>Confidence Band</th><th>Similar in Training</th></tr></thead>
+                <tbody>
+                  <tr style="background:var(--teal-lt);">
+                    <td><strong>SAIGE LQM<span class="tag-rec">Pre-selected</span></strong></td>
+                    <td><strong>$412K</strong></td><td class="better">±$95K</td><td class="better">1,240 matches</td>
+                  </tr>
+                  <tr><td>RMS (vendor)</td><td>$485K</td><td class="na-val">±$180K</td><td class="na-val">Not disclosed</td></tr>
+                  <tr><td>Verisk (vendor)</td><td>$390K</td><td class="na-val">±$160K</td><td class="na-val">Not disclosed</td></tr>
+                </tbody>
+              </table>
+              <div class="callout info" style="margin-top:7px;margin-bottom:0;font-size:10px;">
+                SAIGE pre-selected based on back-test accuracy + in-distribution confidence. <a href="#" onclick="return false;" style="color:var(--teal);font-weight:600;">Override model ▾</a> if governance requires specific vendor.
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn btn-primary" onclick="goTo('s3')">Proceed to Underwriting →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 3: ASSESS TERMS                                    -->
+<!-- Underwriting levers + live assessment + portfolio impact  -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="s3" class="screen">
+<div class="workspace">
+  <div class="left-panel">
+    <div class="lp-label">Annotations</div>
+    <div class="aa">
+      <div class="aa-label">🎬 Screen 3 — What's happening</div>
+      Alison adjusts deductible, coverage cap, wind exclusion, and loading — watching expected annual loss, return, and portfolio risk budget update live via SAIGE LQM. She finds viable bind terms in one session and clicks <strong>Confirm Assessment →</strong>. Default terms (3%) start at BIND WITH CONDITIONS — the portfolio is tight. Try 2% deductible → DECLINE to see fixable-lever guidance, then 5% → BIND.
+    </div>
+    <div class="lp-div"></div>
+    <div class="sc before">
+      <div class="sc-label">Legacy workflow</div>
+      Each revised term set required a new actuarial request. Finding bindable terms: days of back-and-forth.
+    </div>
+    <div class="sc after">
+      <div class="sc-label">With SAIGE · time saved</div>
+      Saves 2–5 days per round-trip. Viable terms found in under 5 minutes — no actuarial request.
+    </div>
+    <div class="lp-div"></div>
+    <div class="ei">
+      <div class="ei-label">⚡ Product Principle · from Upstart Auto</div>
+      At Upstart Auto, Finance Managers chose which offer to present — their income depended on closing the right deal. They needed to trust an AI output enough to stake their customer relationship on it. The fix wasn't explaining the model — it was the Rehashing screen: change a term, see the updated outcome instantly, no submit. Adoption followed once the analyst had control. Applied here: Alison is making the same kind of judgment call — bind or decline, within risk appetite, to maximize portfolio return. SAIGE provides property-level loss precision legacy models can't match. Her market knowledge plus LQM accuracy is what makes each bind both defensible and higher ROI than the legacy workflow.
+    </div>
+    <div class="lp-div"></div>
+    <div class="lp-note"><strong>Hypothesis test:</strong> if the analyst finds viable terms here without routing to the cat team, the workflow gap from the cover is closed.</div>
+  </div>
+
+  <div class="right-panel">
+    <div class="rp-label">Prototype Screen →</div>
+    <div class="product-frame">
+      <div class="scroll-hint">↓</div>
+      <div class="pf-nav">
+        <span class="pf-logo"><em>SAIGE</em> Risk Intelligence</span>
+        <div class="pf-nav-right"><span class="pf-pill">Underwriting Analyst</span><span class="pf-date">Jun 15, 2026</span></div>
+      </div>
+      <div class="pf-progress">
+        <div class="pt-step" onclick="goTo('s1')"><div class="pt-dot done">✓</div><span class="pt-label done">Select Policy</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s2')"><div class="pt-dot done">✓</div><span class="pt-label done">Validate Risk</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s3')"><div class="pt-dot active">3</div><span class="pt-label active">Assess Terms</span></div>
+        <div class="pt-connector"></div>
+        <div class="pt-step" onclick="goTo('s4')"><div class="pt-dot">4</div><span class="pt-label">Confirm & Bind</span></div>
+      </div>
+      <div class="pf-content">
+        <button class="pf-back" onclick="goTo('s2')">← Risk Assessment</button>
+        <div class="ph1">Underwriting Assessment</div>
+        <div class="ph-sub">4721 Pelican Bay Dr · SAIGE LQM v2.1 · Recommendation updates as you adjust terms — no submit required</div>
+        <div class="rehash-split">
+          <div class="card">
+            <div class="sec">Policy Terms <span class="play-hint"></span></div>
+            <div class="lever" id="lever-ded">
+              <div class="lever-lbl">Hurricane Deductible <span class="fix-note">↑ increase to enable bind</span></div>
+              <div class="lever-hint">% of home value homeowner pays before coverage. Higher = less insurer exposure.</div>
+              <div class="radio-row">
+                <div class="r-opt"><input type="radio" name="ded" id="d2" value="2"><label for="d2">2% ($84K)</label></div>
+                <div class="r-opt"><input type="radio" name="ded" id="d3" value="3" checked><label for="d3">3% ($126K)</label></div>
+                <div class="r-opt"><input type="radio" name="ded" id="d5" value="5"><label for="d5">5% ($210K)</label></div>
+                <div class="r-opt"><input type="radio" name="ded" id="d10" value="10"><label for="d10">10% ($420K)</label></div>
+              </div>
+            </div>
+            <div class="lever" id="lever-cap">
+              <div class="lever-lbl">Coverage Cap</div>
+              <div class="lever-hint">Max payout as % of replacement cost. Caps below 100% limit tail exposure.</div>
+              <div class="radio-row">
+                <div class="r-opt"><input type="radio" name="cap" id="c80" value="80"><label for="c80">80% ($3.36M)</label></div>
+                <div class="r-opt"><input type="radio" name="cap" id="c100" value="100" checked><label for="c100">100% ($4.2M)</label></div>
+                <div class="r-opt"><input type="radio" name="cap" id="c125" value="125"><label for="c125">125% ($5.25M)</label></div>
+              </div>
+            </div>
+            <div class="lever" id="lever-load">
+              <div class="lever-lbl">Premium Loading</div>
+              <div class="lever-hint">Additional charge above base rate. Improves return without changing loss estimate.</div>
+              <div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;">
+                <input type="range" id="loading-slider" min="0" max="50" step="5" value="0" style="flex:1;">
+                <span id="loading-display" style="font-size:13px;font-weight:800;color:var(--teal);min-width:30px;text-align:right;">+0%</span>
+              </div>
+            </div>
+            <div class="lever" id="lever-wind">
+              <div class="lever-lbl">Wind Exclusion <span class="fix-note">↑ enable to reduce exposure</span></div>
+              <div class="lever-hint">Exclude wind damage. Wind ≈ 62% of hurricane loss at this location.</div>
+              <div class="tgl-row">
+                <label class="tgl"><input type="checkbox" id="wind-toggle"><div class="tgl-track"></div></label>
+                <span class="tgl-lbl" id="wind-lbl">Wind covered (standard)</span>
+              </div>
+            </div>
+            <div class="lever" style="margin-bottom:0;" id="lever-flood">
+              <div class="lever-lbl">Flood Endorsement</div>
+              <div class="lever-hint">Add flood as covered peril (rider). Moderate flood exposure (4/10).</div>
+              <div class="tgl-row">
+                <label class="tgl"><input type="checkbox" id="flood-toggle"><div class="tgl-track"></div></label>
+                <span class="tgl-lbl" id="flood-lbl">Flood not included</span>
+              </div>
+            </div>
+          </div>
+
+          <div style="position:sticky;top:8px;">
+            <div class="card">
+              <div class="sec">Live Assessment</div>
+              <div style="font-size:9px;color:var(--grey);margin-bottom:8px;">Updates on every change — no submit</div>
+              <div class="res-rec conditions" id="rec-box">
+                <div class="rec-lbl">Recommendation</div>
+                <div class="rec-val" id="rec-val">BIND WITH CONDITIONS</div>
+              </div>
+              <div class="callout danger" id="decline-path" style="display:none;margin-bottom:8px;font-size:10px;"><strong>Risk exceeds threshold.</strong> Highlighted levers show what would flip this to green.</div>
+              <div class="res-row"><span class="res-lbl">Expected annual loss</span><span class="res-val" id="m-loss">$412K</span></div>
+              <div class="res-row"><span class="res-lbl">Est. annual premium</span><span class="res-val" id="m-prem">$556K</span></div>
+              <div class="res-row"><span class="res-lbl">Risk-adjusted return</span><span class="res-val pos" id="m-ret">+25.9%</span></div>
+              <div class="res-row"><span class="res-lbl">Portfolio AAL impact</span><span class="res-val" id="m-aal">+$412K</span></div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+                <div style="font-size:8.5px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;">Portfolio impact at bind</div>
+                <div class="res-row"><span class="res-lbl">Risk budget</span><span class="res-val" style="color:var(--amber);" id="m-riskbdg">78.0% → 78.2% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 80%)</span></span></div>
+                <div class="res-row" style="border-bottom:none;"><span class="res-lbl">Collier concentration</span><span class="res-val" style="color:var(--amber);">33% → 35.0% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 40%)</span></span></div>
+              </div>
+              <div class="callout success" id="bind-success" style="display:none;margin-top:6px;margin-bottom:6px;font-size:10px;"><strong>Terms viable — proceed to record.</strong> This configuration clears all thresholds.</div>
+              <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
+                <div style="font-size:8.5px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;">Scenario spread · Expected annual loss</div>
+                <div class="model-strip">
+                  <div class="ms-item"><div class="ms-name">Historical</div><div class="ms-val" id="ms-hist">$379K</div></div>
+                  <div class="ms-item active-m"><div class="ms-name">Current</div><div class="ms-val" id="ms-saige">$412K</div></div>
+                  <div class="ms-item"><div class="ms-name">Climate 2050</div><div class="ms-val" id="ms-clim">$519K</div></div>
+                </div>
+              </div>
+              <div style="margin-top:10px;">
+                <button class="btn btn-primary" style="width:100%;" onclick="goTo('s4')">Confirm Assessment →</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════ -->
+<!-- SCREEN 4: CONFIRM & BIND                                  -->
+<!-- Governance record + audit trail + bind                    -->
+<!-- ══════════════════════════════════════════════════════════ -->
+<div id="s4" class="screen">
+<div class="workspace">
+  <div class="left-panel">
+    <div class="lp-label">Annotations</div>
+    <div class="aa">
+      <div class="aa-label">🎬 Screen 4 — What's happening</div>
+      Alison reviews the complete deal record. She clicks <strong>Generate Model Report PDF</strong> to produce the compliance artifact, then <strong>Bind Policy →</strong>. Portfolio accumulation updates automatically at bind.
+    </div>
+    <div class="lp-div"></div>
+    <div class="sc before">
+      <div class="sc-label">Legacy workflow</div>
+      Governance docs created manually post-bind — often missing model version, confidence bands, or scenario context.
+    </div>
+    <div class="sc after">
+      <div class="sc-label">With SAIGE · compliance unlocked</div>
+      Florida OIR and Solvency II–formatted record auto-generated. Chief Actuary can adopt without a separate regulatory submission.
+    </div>
+    <div class="lp-div"></div>
+    <div class="ei">
+      <div class="ei-label">⚡ Product Principle · from Upstart Auto</div>
+      At Upstart Auto, automating document verification required the product to generate the compliance artifact — not leave documentation to the loan officer after the fact. An ML system with no audit trail is undeployable in a regulated environment regardless of its accuracy. Applied here: a Chief Actuary won't approve SAIGE for production use without an auto-generated, model-versioned, regulatory-formatted record at every bind. This screen isn't the last step — it's what makes every prior screen trustworthy enough to adopt at scale.
+    </div>
+    <div class="lp-div"></div>
+    <div class="lp-note"><strong>Reg context:</strong> Florida OIR: cat model certification required for rate-making use. Solvency II Art. 101/120: SCR at 99.5% VaR · use test requires model integration into underwriting decisions. NAIC ORSA: annual self-assessment for carriers >$500M written premium.</div>
+  </div>
+
+  <div class="right-panel">
+    <div class="rp-label">Prototype Screen →</div>
+    <div class="product-frame">
+      <div class="scroll-hint">↓</div>
+      <div class="pf-nav">
+        <span class="pf-logo"><em>SAIGE</em> Risk Intelligence</span>
+        <div class="pf-nav-right"><span class="pf-pill">Underwriting Analyst</span><span class="pf-date">Jun 15, 2026</span></div>
+      </div>
+      <div class="pf-progress">
+        <div class="pt-step" onclick="goTo('s1')"><div class="pt-dot done">✓</div><span class="pt-label done">Select Policy</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s2')"><div class="pt-dot done">✓</div><span class="pt-label done">Validate Risk</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s3')"><div class="pt-dot done">✓</div><span class="pt-label done">Assess Terms</span></div>
+        <div class="pt-connector done"></div>
+        <div class="pt-step" onclick="goTo('s4')"><div class="pt-dot active">4</div><span class="pt-label active">Confirm & Bind</span></div>
+      </div>
+      <div class="pf-content">
+        <button class="pf-back" onclick="goTo('s3')">← Underwriting Assessment</button>
+        <div class="ph1">Assessment Record</div>
+        <div class="ph-sub">Review before binding · Auto-logged to audit trail · PDF formatted for compliance review</div>
+        <div class="split">
+          <div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="rec-block">
+                <div class="rec-block-title">Property</div>
+                <div class="rec-line"><span class="rl">Address</span><span class="rv">4721 Pelican Bay Dr, Naples FL</span></div>
+                <div class="rec-line"><span class="rl">Replacement value</span><span class="rv">$4,200,000</span></div>
+                <div class="rec-line"><span class="rl">Construction</span><span class="rv">Wood frame · 1998</span></div>
+              </div>
+              <div class="rec-block">
+                <div class="rec-block-title">Terms Selected</div>
+                <div class="rec-line"><span class="rl">Hurricane deductible</span><span class="rv" id="gov-ded">3% ($126K)</span></div>
+                <div class="rec-line"><span class="rl">Coverage cap</span><span class="rv" id="gov-cap">100% ($4.2M)</span></div>
+                <div class="rec-line"><span class="rl">Premium loading</span><span class="rv" id="gov-load">+0%</span></div>
+                <div class="rec-line"><span class="rl">Wind exclusion</span><span class="rv" id="gov-wind">No — wind covered</span></div>
+                <div class="rec-line"><span class="rl">Flood endorsement</span><span class="rv" id="gov-flood">No — not included</span></div>
+              </div>
+              <div class="rec-block" style="margin-bottom:0;">
+                <div class="rec-block-title">Assessment Output</div>
+                <div class="rec-line"><span class="rl">Recommendation</span><span class="rv" id="gov-rec" style="color:var(--amber);">BIND WITH CONDITIONS</span></div>
+                <div class="rec-line"><span class="rl">Expected annual loss</span><span class="rv" id="gov-loss">$412K</span></div>
+                <div class="rec-line"><span class="rl">Est. annual premium</span><span class="rv" id="gov-prem">$556K</span></div>
+                <div class="rec-line"><span class="rl">Risk-adjusted return</span><span class="rv good" id="gov-ret">+25.9%</span></div>
+                <div class="rec-line"><span class="rl">Risk budget after bind</span><span class="rv warn-c" id="gov-riskbdg">78.0% → 78.2% (ceiling 80%)</span></div>
+                <div class="rec-line"><span class="rl">Collier concentration</span><span class="rv warn-c">33% → 35.0% (ceiling 40%)</span></div>
+              </div>
+            </div>
+            <div class="callout success" style="font-size:10px;"><strong>Within analyst authority:</strong> $4.2M below $5M limit. Both concentration and risk budget within ceiling. No Chief Underwriter sign-off required.</div>
+          </div>
+          <div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="sec">Model Provenance</div>
+              <div class="mprov">
+                <div class="mp-label">SAIGE LQM — Model Card</div>
+                <div class="mp-row"><span class="mp-key">model_id</span><span class="mp-val">saige-lqm-gulf-coast-v2.1</span></div>
+                <div class="mp-row"><span class="mp-key">training_domain</span><span class="mp-val">Gulf Coast residential (2000–2024)</span></div>
+                <div class="mp-row"><span class="mp-key">similar_properties</span><span class="mp-val">1,240 matches for this type</span></div>
+                <div class="mp-row"><span class="mp-key">back_test_error</span><span class="mp-val">8% avg (Gulf Coast 2017–2023)</span></div>
+                <div class="mp-row"><span class="mp-key">confidence_band</span><span class="mp-val">±$95K (90% CI this property)</span></div>
+                <div class="mp-row"><span class="mp-key">regulatory</span><span class="mp-val">Florida OIR · Solvency II · NAIC ORSA</span></div>
+                <div class="mp-row"><span class="mp-key">validation_status</span><span class="mp-val" style="color:#fbbf24;">PROTOTYPE — not validated</span></div>
+              </div>
+            </div>
+            <div class="card" style="margin-bottom:9px;">
+              <div class="rec-block" style="margin-bottom:0;">
+                <div class="rec-block-title">Audit Metadata</div>
+                <div class="rec-line"><span class="rl">Analyst</span><span class="rv">Alison Chen · Gulf Coast Division</span></div>
+                <div class="rec-line"><span class="rl">Date / Time</span><span class="rv">Jun 15, 2026 · 14:32 UTC</span></div>
+                <div class="rec-line"><span class="rl">Assessment ID</span><span class="rv">#GC-2026-0615-4721</span></div>
+                <div class="rec-line"><span class="rl">Audit trail</span><span class="rv good">● Auto-logged</span></div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px;">
+              <button class="btn btn-secondary" style="width:100%;font-size:11px;" onclick="alert('Model Report PDF generated — includes model card, confidence bands, scenario comparison, and audit record. Formatted for Florida OIR certification and Solvency II Art. 101/120.')">↓ Generate Model Report PDF</button>
+              <button class="btn btn-primary" style="width:100%;" onclick="alert('Policy #GC-2026-0615-4721 bound. Gulf Coast portfolio updated — risk budget now 78.2%, Collier concentration 35.0%.')">Bind Policy →</button>
+            </div>
+            <div style="font-size:10px;color:var(--grey);text-align:center;margin-top:5px;">Binding updates portfolio risk summary automatically</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+
+<script>
+function goTo(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='s4')updateGov();
+}
+const state={deductible:'3',coverageCap:'100',loading:0,windExcluded:false,floodIncluded:false};
+const RISK_CAPACITY=152000000/0.78;
+function calcLoss(s){
+  return Math.round(412000
+    *({2:1.20,3:1.00,5:0.78,10:0.55}[s.deductible]||1)
+    *({80:0.88,100:1.00,125:1.10}[s.coverageCap]||1)
+    *(s.windExcluded?0.38:1)
+    *(s.floodIncluded?1.18:1)
+  );
+}
+function fmt(n){return n>=1000000?'$'+(n/1000000).toFixed(2)+'M':'$'+Math.round(n/1000)+'K';}
+function getRec(l){return l<=350000?'BIND':l<=450000?'BIND WITH CONDITIONS':'DECLINE';}
+function updateUI(){
+  const loss=calcLoss(state);
+  const prem=Math.round(loss*1.35*(1+state.loading/100));
+  const ret=((prem-loss)/prem*100).toFixed(1);
+  const rec=getRec(loss);
+  const box=document.getElementById('rec-box');
+  box.className='res-rec '+(rec==='BIND'?'bind':rec.includes('CONDITIONS')?'conditions':'decline');
+  document.getElementById('rec-val').textContent=rec;
+  document.getElementById('m-loss').textContent=fmt(loss);
+  document.getElementById('m-prem').textContent=fmt(prem);
+  const rEl=document.getElementById('m-ret');
+  rEl.textContent=(parseFloat(ret)>=0?'+':'')+ret+'%';
+  rEl.className='res-val '+(parseFloat(ret)>=0?'pos':'neg');
+  document.getElementById('m-aal').textContent='+'+fmt(loss);
+  document.getElementById('ms-hist').textContent=fmt(Math.round(loss*.92));
+  document.getElementById('ms-saige').textContent=fmt(loss);
+  document.getElementById('ms-clim').textContent=fmt(Math.round(loss*1.26));
+  // Portfolio risk budget
+  const newRiskPct=((152000000+loss)/RISK_CAPACITY*100).toFixed(1);
+  const riskEl=document.getElementById('m-riskbdg');
+  if(riskEl){
+    const color=parseFloat(newRiskPct)>=79.5?'var(--red)':'var(--amber)';
+    riskEl.style.color=color;
+    riskEl.innerHTML='78.0% → '+newRiskPct+'% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 80%)</span>';
+  }
+  // Success callout
+  const successEl=document.getElementById('bind-success');
+  if(successEl)successEl.style.display=rec==='BIND'?'block':'none';
+  // Decline path + fixable levers
+  const dp=document.getElementById('decline-path');
+  if(rec==='DECLINE'){
+    dp.style.display='block';
+    const dedFix=['5','10'].some(d=>calcLoss({...state,deductible:d})<=450000);
+    const windFix=!state.windExcluded&&calcLoss({...state,windExcluded:true})<=450000;
+    document.getElementById('lever-ded').classList.toggle('fixable',dedFix&&(state.deductible==='2'||state.deductible==='3'));
+    document.getElementById('lever-wind').classList.toggle('fixable',windFix);
+  }else{
+    dp.style.display='none';
+    ['lever-ded','lever-wind'].forEach(id=>document.getElementById(id)?.classList.remove('fixable'));
+  }
+  document.getElementById('wind-lbl').textContent=state.windExcluded?'Wind excluded (applied)':'Wind covered (standard)';
+  document.getElementById('flood-lbl').textContent=state.floodIncluded?'Flood included (rider)':'Flood not included';
+  window._gs={loss,prem,ret,rec};
+}
+function updateGov(){
+  const s=window._gs||{loss:412000,prem:556000,ret:'25.9',rec:'BIND WITH CONDITIONS'};
+  const dL={'2':'2% ($84K)','3':'3% ($126K)','5':'5% ($210K)','10':'10% ($420K)'};
+  const cL={'80':'80% ($3.36M)','100':'100% ($4.2M)','125':'125% ($5.25M)'};
+  document.getElementById('gov-ded').textContent=dL[state.deductible];
+  document.getElementById('gov-cap').textContent=cL[state.coverageCap];
+  document.getElementById('gov-load').textContent='+'+state.loading+'%';
+  document.getElementById('gov-wind').textContent=state.windExcluded?'Yes — wind excluded':'No — wind covered';
+  document.getElementById('gov-flood').textContent=state.floodIncluded?'Yes — flood included':'No — not included';
+  const rEl=document.getElementById('gov-rec');
+  rEl.textContent=s.rec;
+  rEl.style.color=s.rec==='BIND'?'var(--green)':s.rec.includes('CONDITIONS')?'var(--amber)':'var(--red)';
+  document.getElementById('gov-loss').textContent=fmt(s.loss);
+  document.getElementById('gov-prem').textContent=fmt(s.prem);
+  const retEl=document.getElementById('gov-ret');
+  retEl.textContent=(parseFloat(s.ret)>=0?'+':'')+s.ret+'%';
+  retEl.className=parseFloat(s.ret)>=0?'rv good':'rv';
+  const newRiskPct=((152000000+s.loss)/RISK_CAPACITY*100).toFixed(1);
+  document.getElementById('gov-riskbdg').textContent='78.0% → '+newRiskPct+'% (ceiling 80%)';
+}
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('input[name="ded"]').forEach(el=>el.addEventListener('change',()=>{state.deductible=el.value;updateUI();}));
+  document.querySelectorAll('input[name="cap"]').forEach(el=>el.addEventListener('change',()=>{state.coverageCap=el.value;updateUI();}));
+  const sl=document.getElementById('loading-slider');
+  sl?.addEventListener('input',()=>{state.loading=parseInt(sl.value);document.getElementById('loading-display').textContent='+'+state.loading+'%';updateUI();});
+  document.getElementById('wind-toggle')?.addEventListener('change',e=>{state.windExcluded=e.target.checked;updateUI();});
+  document.getElementById('flood-toggle')?.addEventListener('change',e=>{state.floodIncluded=e.target.checked;updateUI();});
+  updateUI();
+});
+</script>
+</body>
+</html>
