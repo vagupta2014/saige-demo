@@ -419,8 +419,8 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
         <!-- Health metrics -->
         <div class="g4" style="margin-bottom:10px;">
           <div class="card"><div class="metric"><div class="lbl">Total Insured Value</div><div class="val">$12.5B</div><div class="sub">50,000 locations</div></div></div>
-          <div class="card"><div class="metric"><div class="lbl">Avg Annual Loss</div><div class="val">$152M</div><div class="sub">1.2% of TIV</div></div></div>
-          <div class="card"><div class="metric"><div class="lbl">1-in-100 Worst Year</div><div class="val">$1.08B</div><div class="sub">8.6% of TIV</div></div></div>
+          <div class="card"><div class="metric"><div class="lbl"><span class="tip" data-tip="Average Annual Loss: probability-weighted mean loss across all simulated cat events in a year. The core metric cat models produce — used as the technical premium base before loading.">Avg Annual Loss</span></div><div class="val">$152M</div><div class="sub">1.2% of TIV</div></div></div>
+          <div class="card"><div class="metric"><div class="lbl"><span class="tip" data-tip="Occurrence Exceedance Probability PML: the loss expected to be exceeded once in 100 years in a single event. The primary metric reinsurers use to price per-occurrence covers.">1-in-100 Worst Year</span></div><div class="val">$1.08B</div><div class="sub">8.6% of TIV</div></div></div>
           <div class="card" style="border-top:3px solid var(--amber);">
             <div class="metric"><div class="lbl">Risk Budget Used</div><div class="val" style="color:var(--amber);">78%</div><div class="sub">Ceiling 80% · 3 pending</div></div>
             <div class="app-wrap" style="margin-top:5px;"><div class="app-fill warn" style="width:78%;"></div></div>
@@ -620,7 +620,6 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
     </div>
     <div class="lp-div"></div>
     <div class="lp-note"><strong>Hypothesis test:</strong> if the analyst finds viable terms here without routing to the cat team, the workflow gap from the cover is closed.</div>
-    <div class="lp-note" style="margin-top:6px;"><strong>On the 5 levers:</strong> these are underwriter-controllable policy terms — not raw risk inputs. The underlying property risk (location, construction, coastal proximity) is already captured in SAIGE's AAL. Alison is deciding how much of that risk the carrier accepts and at what terms. Which levers belong here is a hypothesis to validate with underwriters.</div>
   </div>
 
   <div class="right-panel">
@@ -642,7 +641,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
       </div>
       <div class="pf-content">
         <button class="pf-back" onclick="goTo('s2')">← Risk Assessment</button>
-        <div class="ph1">Underwriting Assessment</div>
+        <div class="ph1"><span class="tip" data-tip="These levers are the policy terms Alison controls — deductible, coverage limits, peril inclusions, and pricing loading. The underlying property risk is already captured in SAIGE's AAL. Each lever changes how much of that risk the carrier accepts and at what price.">Underwriting Assessment</span></div>
         <div class="ph-sub">4721 Pelican Bay Dr · SAIGE LQM v2.1 · Recommendation updates as you adjust terms — no submit required</div>
         <div class="rehash-split">
           <div class="card">
@@ -707,7 +706,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
               <div class="res-row"><span class="res-lbl">Portfolio AAL impact</span><span class="res-val" id="m-aal">+$412K</span></div>
               <div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
                 <div style="font-size:8.5px;color:var(--grey);font-weight:700;text-transform:uppercase;letter-spacing:.7px;margin-bottom:5px;">Portfolio impact at bind</div>
-                <div class="res-row"><span class="res-lbl">Risk budget</span><span class="res-val" style="color:var(--amber);" id="m-riskbdg">78.0% → 78.2% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 80%)</span></span></div>
+                <div class="res-row"><span class="res-lbl"><span class="tip" data-tip="The carrier's allocated capacity for cat loss — portfolio AAL as a % of a ceiling set by the Chief Actuary. At 78% of an 80% ceiling, almost no room remains for new coastal exposure.">Risk budget</span></span><span class="res-val" style="color:var(--amber);" id="m-riskbdg">78.0% → 78.2% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 80%)</span></span></div>
                 <div class="res-row" style="border-bottom:none;"><span class="res-lbl">Collier concentration</span><span class="res-val" style="color:var(--amber);">33% → 35.0% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 40%)</span></span></div>
               </div>
               <div class="callout success" id="bind-success" style="display:none;margin-top:6px;margin-bottom:6px;font-size:10px;"><strong>Terms viable — proceed to record.</strong> This configuration clears all thresholds.</div>
