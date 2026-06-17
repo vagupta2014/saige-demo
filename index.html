@@ -173,6 +173,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .prop-row:last-child{border-bottom:none;}
 .pr-l{color:var(--slate);}
 .pr-v{font-weight:600;color:var(--navy);}
+.tip{position:relative;cursor:help;border-bottom:1px dashed var(--slate);}
+.tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:#1e293b;color:#f8fafc;font-size:10px;line-height:1.5;padding:6px 9px;border-radius:5px;width:220px;white-space:normal;pointer-events:none;opacity:0;transition:opacity .15s;z-index:99;}
+.tip:hover::after{opacity:1;}
 
 /* ── PENDING ROWS ────────────────────────────────────────── */
 .pend-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:9px;}
@@ -540,7 +543,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
               <div class="risk-row"><span class="risk-lbl">Flood Exposure</span><div class="risk-track"><div class="risk-fill m" style="width:40%;"></div></div><span class="risk-num" style="color:var(--amber);">4/10</span></div>
               <div class="risk-row" style="margin-bottom:0;"><span class="risk-lbl">Climate Trajectory</span><div class="risk-track"><div class="risk-fill h" style="width:70%;"></div></div><span class="risk-num" style="color:var(--red);">7/10</span></div>
               <div class="div"></div>
-              <div class="prop-row"><span class="pr-l">Replacement value</span><span class="pr-v">$4,200,000</span></div>
+              <div class="prop-row"><span class="pr-l"><span class="tip" data-tip="Cost to rebuild the structure at today's prices if destroyed — not market value. Land is excluded. Insurer pays up to this amount.">Replacement value</span></span><span class="pr-v">$4,200,000</span></div>
               <div class="prop-row"><span class="pr-l">Distance from coast</span><span class="pr-v">0.3 miles</span></div>
               <div class="prop-row"><span class="pr-l">Construction</span><span class="pr-v">Wood frame · 1998</span></div>
               <div class="prop-row"><span class="pr-l">Storm mitigation</span><span class="pr-v" style="color:var(--amber);">None documented</span></div>
