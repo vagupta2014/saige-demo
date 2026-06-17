@@ -176,6 +176,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;
 .tip{position:relative;cursor:help;border-bottom:1px dashed var(--slate);}
 .tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:0;background:#1e293b;color:#f8fafc;font-size:10px;line-height:1.5;padding:6px 9px;border-radius:5px;width:220px;white-space:normal;pointer-events:none;opacity:0;transition:opacity .15s;z-index:99;}
 .tip:hover::after{opacity:1;}
+.tip-down::after{top:calc(100% + 6px);bottom:auto;}
+.pf-progress .pf-back{margin-right:18px;margin-bottom:0;}
 
 /* ── PENDING ROWS ────────────────────────────────────────── */
 .pend-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);gap:9px;}
@@ -641,7 +643,7 @@ input[type=range]{width:100%;accent-color:var(--teal);cursor:pointer;}
       </div>
       <div class="pf-content">
         <button class="pf-back" onclick="goTo('s2')">← Risk Assessment</button>
-        <div class="ph1"><span class="tip" data-tip="These levers are the policy terms Alison controls — deductible, coverage limits, peril inclusions, and pricing loading. The underlying property risk is already captured in SAIGE's AAL. Each lever changes how much of that risk the carrier accepts and at what price.">Underwriting Assessment</span></div>
+        <div class="ph1"><span class="tip tip-down" data-tip="These levers are the policy terms Alison controls — deductible, coverage limits, peril inclusions, and pricing loading. The underlying property risk is already captured in SAIGE's AAL. Each lever changes how much of that risk the carrier accepts and at what price.">Underwriting Assessment</span></div>
         <div class="ph-sub">4721 Pelican Bay Dr · SAIGE LQM v2.1 · Recommendation updates as you adjust terms — no submit required</div>
         <div class="rehash-split">
           <div class="card">
