@@ -884,11 +884,11 @@ function updateUI(){
   document.getElementById('ms-hist').textContent=fmt(Math.round(loss*.92));
   document.getElementById('ms-saige').textContent=fmt(loss);
   document.getElementById('ms-clim').textContent=fmt(Math.round(loss*1.26));
-  // Portfolio risk budget
-  const newRiskPct=((152000000+loss)/RISK_CAPACITY*100).toFixed(1);
+  // Portfolio risk budget — 8× concentration loading (Collier County correlated exposure)
+  const newRiskPct=((152000000+loss*8)/RISK_CAPACITY*100).toFixed(1);
   const riskEl=document.getElementById('m-riskbdg');
   if(riskEl){
-    const color=parseFloat(newRiskPct)>=79.5?'var(--red)':'var(--amber)';
+    const color=parseFloat(newRiskPct)>=79.8?'var(--red)':'var(--amber)';
     riskEl.style.color=color;
     riskEl.innerHTML='78.0% → '+newRiskPct+'% <span style="font-size:9px;color:var(--grey);font-weight:400;">(ceiling 80%)</span>';
   }
@@ -928,7 +928,7 @@ function updateGov(){
   const retEl=document.getElementById('gov-ret');
   retEl.textContent=(parseFloat(s.ret)>=0?'+':'')+s.ret+'%';
   retEl.className=parseFloat(s.ret)>=0?'rv good':'rv';
-  const newRiskPct=((152000000+s.loss)/RISK_CAPACITY*100).toFixed(1);
+  const newRiskPct=((152000000+s.loss*8)/RISK_CAPACITY*100).toFixed(1);
   document.getElementById('gov-riskbdg').textContent='78.0% → '+newRiskPct+'% (ceiling 80%)';
 }
 document.addEventListener('DOMContentLoaded',()=>{
